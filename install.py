@@ -12,7 +12,7 @@ def     install(home, rc_path):
         for line in rc_file:
             if 'alias mkf' not in line:
                 new_rc.append(line)
-        new_rc.append("alias mkf='~/Utils/py_makefiler/py_makefiler.py'\n")
+        new_rc.append("alias mkf='~/Utils/py_makefiler/makefiler.py'\n")
     with open(rc_path, 'w') as rc_file:
         for line in new_rc:
             print(line, file=rc_file, end='')
