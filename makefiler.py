@@ -13,8 +13,9 @@ def     error(msg='', hlp=False, ret_val=0):
         mkf [OPTS] SRCS
     Options:
         -o  Output name
-        -l  Langage (C or CPP)
-        -f  Compiler flags
+        -c  Langage (C or CPP)
+        -l  Libraries (as one string)
+        -f  Compiler flags (as one string)
     Flags:
         -h  This help"""
 
@@ -29,16 +30,16 @@ def     error(msg='', hlp=False, ret_val=0):
 if __name__ == '__main__':
     DATA = """NAME	=	{-o}
 SRCS	=	{srcs}
-OBJS	=	$(SRCS:.c=.o)
-CC	=	{-l}
+OBJS	=	$(SRCS:{-c[s_ext]}={-c[o_ext]})
+CC	=	{-c[cc]}
 CFLAGS	=	{-f}
-
+{-l}
 all	:	$(NAME)
 
 $(NAME)	:	$(OBJS)
-		$(CC) $(CFLAGS) $^ -o $@
+		$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
-%.opp	:	%.cpp
+%{-c[o_ext]}	:	%{-c[s_ext]}
 		$(CC) $(CFLAGS) -c $< -o $@
 
 clean	:
@@ -48,9 +49,14 @@ fclean	:	clean
 		rm -rf $(NAME)
 
 re	:	fclean all"""
-    OPTS = 'o:l:f:h'
-    VALUES = {'srcs': None, '-o': 'a.out', '-l': 'gcc', '-f': '-Wall -Wall -Wextra'}
-    LANGUAGES = {'c': 'gcc', 'c++': 'g++', 'cpp': 'g++'}
+    OPTS = 'o:c:f:l:h'
+    LANGUAGES = {'c': {'cc': 'gcc', 's_ext': '.c', 'o_ext': '.o'}, \
+            'cpp': {'cc': 'g++', 's_ext': '.cpp', 'o_ext': '.opp'}}
+    VALUES = {'srcs': None, \
+            '-o': 'a.out', \
+            '-c': LANGUAGES['c'], \
+            '-l': '', \
+            '-f': '-Wall -Wall -Wextra'}
 
     try:
         OPTIONS = getopt.getopt(sys.argv[1:], OPTS)
@@ -61,10 +67,12 @@ re	:	fclean all"""
         for opt, par in OPTIONS[0]:
             if opt == '-h':
                 error(hlp=True)
-            if opt == '-l':
+            elif opt == '-c':
                 if par.lower() not in LANGUAGES.keys():
                     error('Unsupported langage')
-                VALUES['-l'] = LANGUAGES[par.lower()]
+                VALUES['-c'] = LANGUAGES[par.lower()]
+            elif opt == '-l':
+                VALUES['-l'] = 'LIBS	=	' + par + '\n'
             else:
                 VALUES[opt] = par
         VALUES['srcs'] = ' \\\n\t\t'.join(OPTIONS[1])
